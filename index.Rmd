@@ -1,10 +1,11 @@
 ---
-title: "my computational musicology dashboard"
+title: "My Computational Musicology Dashboard"
 author: "saryanasser"
-date: "2025-02-12"
+date: "Block 4 - 2025"
 output: 
   flexdashboard::flex_dashboard:
     storyboard: true
+    theme: cosmo
 ---
 ```{r setup, include=FALSE}
 library(tidyverse)
@@ -12,13 +13,9 @@ library(flexdashboard)
 library(plotly)
 ```
 
-### Welcome to Computational Musicology 2024!
+### Introduction
 
-Welcome to Computational Musicology 2024! This storyboard contains further examples from each week to inspire you.
-
-You can access the lecture notes at the following links.
-
-- [Week 7 · Computational Musicology and (Audio) Visualisation](./notes/compmus2025-w07.html)
+Welcome to my Computational Musicology portfolio for 2025! This storyboard contains further examples from each week to inspire you.
 
 ### Visualising the AI Song Contest
 
@@ -100,3 +97,12 @@ aisc2024 |>
 
 ***
 New and updated version 
+
+### Personal track descriptions
+
+I decided on exploring different genres that I like by asking different models for various genres of songs. I have always been a fan of post-punk, alternative rock music from the late 90s to early 2000s, such as Interpol, The Strokes, Bloc Party, Arctic Monkeys, Fontaines D.C. With the help of AI, I came up with this description to use as a prompt for gen AI music models: a high-energy alt rock / post-punk song with a melodic bassline, intricate drumming, and sharp and rhythmic guitar work, reminiscent of the bands Interpol and Bloc Party. dynamic, with tension-building verses leading into an explosive, anthemic chorus. create a sense of depth and intensity.” I also used this shortened version for models with character limits “Post-Punk, Driving Melodic Bassline, Angular Reverb-Drenched Guitars, Punchy Dynamic Drumming, Moody Detached Vocals, Urgent & Anthemic, Dark Yet Energetic, Tension-Building Composition, 140 BPM”. I have also recently been enjoying deep house music, so I decided to choose this genre as one of my songs. I used the following prompts, “deep house song that has a hypnotic beat, gradually layering warm synths, deep basslines, and subtle percussive beats, with a steady, entrancing rhythm. slow, cinematic build-ups that evoke nostalgia and euphoria. Incorporate atmospheric pads and a shimmering, time-dissolving feel of the track, with immersive, and emotionally uplifting verses and bridges, suitable for a sunset in the mountains” and “Deep House, Hypnotic Synth Pads, Pulsing Bassline, Rolling Four-on-the-Floor Groove, Atmospheric Textures, Slow-Building Progression, Dreamy Vocal Samples, Cinematic, Nostalgic, Expansive, 120 BPM”. I wanted to try a different genre that I also enjoy, something along the lines of Lana del Rey’s style. So I used the following prompts, “A cinematic baroque / dream pop composition that blends dreamy electronic synths with classical orchestration. Feature violins, melancholic clarinets, and rich trumpet swells, weaving through ethereal synth pads and delicate, reverberated piano. The rhythm should be slow and hypnotic, with a hazy, dreamlike quality. The vocals should be intimate yet grand, drenched in vintage-style reverb, with poetic, melancholic lyrics evoking themes of romance, nostalgia, and faded Hollywood glamour. Think of Lana Del Rey’s storytelling style, but with a modern dream pop twist—layered harmonies, sweeping crescendos, and an air of cinematic longing .” and “Baroque Pop / Dream Pop, Ethereal Synth Pads, Sweeping Violin & Clarinet Arrangements, Melancholic Trumpet Swells, Reverb-Drenched Intimate Vocals, Vintage Aesthetic, Poetic & Nostalgic, Cinematic & Grand, 80 BPM”. I explored the outputs of these prompts from various models including Suno, Stable Audio, Beatoven.ai, Soundverse.ai, Udio, and Mubert. Although I was hesitant to try Suno and Udio given their use of artists’ music without compensating them, I wanted to see whether there would be any differences in the quality, production output, relevance to the prompt, and similarity to expectations and existing songs. I ended up deciding on the Stable Audio deep house track because it seemed to best match my expectations of emotive, intense, while also calming and not sounding too elaborate. I found the vocal and lyrical qualities of most models to be of somewhat lower quality than I was expecting, with many songs sounding unnatural or AI generated (understandably). I ended up deciding to go with another deep house song that I generated on Suno.  
+
+
+### Conclusion / Discussion
+
+n/a
