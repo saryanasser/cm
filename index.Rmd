@@ -67,8 +67,35 @@ aisc2024 |>                   # Start with the data
   )
 ggplotly()
 ```
+This is the bad visualisation of the AI Song Contest we used in our first lab session, this time in a dashboard.
 
+### Visualising the AI Song Contest 2
+```{r}
+aisc2024 |> 
+  ggplot(aes(x = tempo, y = arousal, color = danceability)) +
+  geom_point(alpha = 0.7, aes(size = instrumentalness)) +  # Add transparency for visibility
+  geom_smooth(method = "loess", color = "black", linetype = "dashed", se = FALSE) +  # Trend line for clarity
+  scale_x_continuous(
+    limits = c(50, 200),
+    breaks = seq(50, 200, by = 50)
+  ) +
+  scale_y_continuous(
+    limits = c(1, 9),
+    breaks = c(1, 5, 9)
+  ) +
+  scale_color_viridis_c(option = "plasma") +  # Use a distinct, high-contrast palette
+  scale_size(range = c(1, 6)) +  # Keep point sizes meaningful
+  theme_minimal(base_size = 14) +  # Cleaner theme with larger text
+  labs(
+    title = "AI Song Contest 2024: Tempo vs. Arousal",
+    subtitle = "Danceability indicated by color, instrumentalness by size",
+    x = "Tempo (BPM)",
+    y = "Arousal (Energy Level)",
+    color = "Danceability",
+    size = "Instrumentalness"
+  ) +
+  theme(legend.position = "bottom")  # Move legend to avoid overlap
+```
 
 ***
 
-This is the bad visualisation of the AI Song Contest we used in our first lab session, this time in a dashboard.
