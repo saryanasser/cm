@@ -67,6 +67,7 @@ aisc2024 |>                   # Start with the data
   )
 ggplotly()
 ```
+***
 This is the bad visualisation of the AI Song Contest we used in our first lab session, this time in a dashboard.
 
 ### Visualising the AI Song Contest 2
@@ -98,4 +99,4 @@ aisc2024 |>
 ```
 
 ***
-
+New and updated version 
