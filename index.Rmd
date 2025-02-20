@@ -15,7 +15,11 @@ library(plotly)
 
 ### Introduction
 
-Welcome to my Computational Musicology portfolio for 2025! This storyboard contains further examples from each week to inspire you.
+Welcome to my Computational Musicology portfolio for 2025! This storyboard contains my perspective on the examples from each week.
+
+
+![Portfolio 2025, credits; https://www.google.com/url?sa=i&url=http%3A%2F%2Fgyulabodonyi.com%2Fmusic-visualization%2F&psig=AOvVaw3R141Xm5ROKzaMw0YacZhl&ust=1740153548874000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCKiX7-rP0osDFQAAAAAdAAAAABAE](/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/music_visualisation.jpg){width=500px}
+
 
 ### Visualising the AI Song Contest
 
@@ -96,7 +100,21 @@ aisc2024 |>
 ```
 
 ***
-New and updated version 
+To improve and build upon the first visualization, I sought to formulate a story by improving the look of the visualization, making it more readable. I went about doing this by:
+
+1. Removing elements like `geom_rug()` that did not add much value  
+2. Adjusting labels, font sizes, and layout to improve clarity  
+3. Adding trend lines or facets for better pattern recognition, enhancing comparisons  
+4. Using the size and color variables in a meaningful way  
+
+
+This updated version:  
+
+✅ Clearly shows tempo vs. arousal trends  
+✅ Uses color and size effectively  
+✅ Highlights overall trends with a dashed trend line  
+✅ Has a clean and readable layout  
+
 
 ### Personal track descriptions
 
@@ -105,4 +123,4 @@ I decided on exploring different genres that I like by asking different models f
 
 ### Conclusion / Discussion
 
-n/a
+incompl
