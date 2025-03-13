@@ -13,6 +13,96 @@ library(flexdashboard)
 library(plotly)
 ```
 
+### CLass Corpus Tempi Histogram
+```{r}
+library(tidyverse)
+
+# Load the dataset
+compmus_data <- read_csv("compmus2025.csv")
+
+# Create a histogram of the "tempo" column
+ggplot(compmus_data, aes(x = tempo)) +
+  geom_histogram(binwidth = 5, fill = "deeppink4", color = "black") +
+  labs(title = "Histogram of Tempi in Class Corpus",
+       x = "Tempo (BPM)",
+       y = "Count") +
+  theme_minimal()
+
+```
+
+***
+
+There is a clear peak around 90-100 BPM, suggesting that this is the most frequent tempo range in the class corpus. It is also interesting that there are multiple peaks, suggesting that there is a diverse set of tempos rather than a single dominant one. There are also some tracks in the lower tempo range (below 50 BPM), possibly due to half-time interpretations.
+
+
+
+### Tempogram Energy Novelty
+```{r}
+library(tidyverse)
+source("compmus.R")
+"features/reinout-w-2.json" |>
+  compmus_energy_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Energy Novelty")
+```
+
+***
+
+The ``compmus_energy_novelty()` function estimates novelty based on sudden changes in loudness over time. It detects significant shifts in energy levels, which are useful for identifying musical onsets and transitions. For this particular track, there are evident onsets at approximately 10 and 70 seconds.
+
+
+
+### Cepstrogram Spectral Novelty
+```{r}
+library(tidyverse)
+source("compmus.R")
+"features/reinout-w-2.json" |>
+  compmus_spectral_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Spectral Novelty")
+```
+
+***
+
+The `compmus_spectral_novelty()` function approximates spectral novelty by analyzing cepstrograms, which represent changes in the frequency content of a signal, detecting harmonic or timbral shifts better than energy-based novelty. Because this visualization seems more consistent that that of the energy novelty, it can be deduced that there is less spectral variation and more energy novelty. 
+
+
+
+
+
+
+### tempograms
+```{r}
+library(gridExtra)
+regular_tempogram <- "features/reinout-w-2.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(option = "rocket", guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Regular Tempogram") +
+  theme_dark()
+
+cyclic_tempogram <- "features/reinout-w-2.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(option = "rocket", guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Cyclic Tempogram") +
+  theme_dark()
+
+grid.arrange(regular_tempogram, cyclic_tempogram, ncol = 2)
+```
+
+***
+
+The regular tempogram shows several tempo harmonics (observable lines at increasing bpm values of 150, 300, 450). This suggests that the music contains strong rhythmic subdivisions, reinforcing multiple layers of the base tempo. The high presence of harmonics suggests a steady and rhythmic beat structure, likely because it is an electronic / techno track. The lack of tempo variation over time indicates that the tempo remains stable throughout the track.
+On the other hand, the cyclic tempogram shows a dominant tempo of around 150 bpm, with a weaker subharmonic at around 110 bpm. 
+
+
 ### Keygram
 
 ```{r}
@@ -111,9 +201,11 @@ key_templates <-
   scale_fill_viridis_c(option = "rocket", guide = "none") +            # Change the colours?
   labs(x = "Time (s)", y = "Template", fill = NULL) +
   theme_dark()                                      # Change the theme?
-ggplotly()
+
 ```
+
 ***
+
 Using the 1–0 coding for the chord templates, I generated a Keygram for Reinout's second track. This Keygram makes use of the new helper function `compmus_match_pitch_templates`, which compares the averaged chroma vectors against templates. Generally, a keygram shows the progression of chords over time by matching chroma features (pitch class profiles) to predefined chord templates. The visualization represents which chords are most likely at each point in time. For instance, for the chosen track, dark colors, such as at the start of the track and around the 70-80 second range, represent short distances / differences between the recorded chords and the template. keygrams help identify harmonic progressions, modulations, and changes in harmony over time.
 
 ### Keygram using Temperley's proposed improvements
@@ -214,9 +306,10 @@ key_templates <-
   scale_fill_viridis_c(option = "rocket", guide = "none") +               # Change the colours?
   labs(x = "Time (s)", y = "Template", fill = NULL) +
   theme_light()                                      # Change the theme?
-ggplotly()
 ```
+
 ***
+
 This is the same keygram generateed using Temperley's proposed improvements. It reveals more or less similar insights, but generally, Temperely's improvements imply clearer or more stable key regions, assign higher weights to stable scale degrees (tonic, dominant), and reflect more natural tonal hierarchies 
 
 ### Chordogram
@@ -354,7 +447,9 @@ source("compmus.R")
   theme_dark()   
 ```
 
-### Chroma- vs Timbre- based self-similarity
+***
+
+Chroma- vs Timbre- based self-similarity:
 
 Timbre features, often represented by MFCCs (Mel-Frequency Cepstral Coefficients), capture the spectral characteristics of the sound. This timbre-based self-similarity chart highlights instrumental changes and overall sound quality / production shifts.The effectiveness of chroma- or timbre-based self-similarity for structural analysis depends on the specific characteristics of the track: While the chroma-based self-similarity captures harmonic progressions, tonal structure, key changes, and chord progressions (providing clearer structural pictures for tracks with harmonic content such as pop , jazz and classical music),  timbre-based self-similarity captures instrumental texture and sound quality, outlining changes in orchestration, dynamics, and articulation. Because my chosen track is a more electronic / EDM song, its timbre features are at the forefront, making the timbre-based self-similarity chart more insightful. The timbre-based self-similarity chart portrays the tracks repeated instrumental sections through the prominent diagonal lines with sudden shifts indicating timbral changes (the introduction of new instruments)
 
@@ -413,7 +508,9 @@ aisc2024 |>                   # Start with the data
   )
 ggplotly()
 ```
+
 ***
+
 This is the bad visualisation of the AI Song Contest we used in our first lab session, this time in a dashboard.
 
 ### Visualising the AI Song Contest 2
@@ -518,9 +615,9 @@ source("compmus.R")
 
 ```
 
-### Analysis
+***
 
-The Essentia features of own tracks were not available for analysis, so for the basis of the following visualizations, I used a fellow student's tracks, Reinout W, which I personally enjoyed, found intriguing, and was curious what computational analysis may reveal about. This chromagram of a Reinout's second track, which reveals the distribution of the 12 musical pitch classes of the selected song. It shows relatively high instances of the C, D, E, G, and A pitch classes, with lower instances of the C#/Db, D#/Eb, F, F#Gb, G#/Ab, and A#/Bb classes. A chromagram represents pitch class content regardless of octave, making it useful for identifying harmonic structure and key
+The Essentia features of my own tracks were not available for analysis, so for the basis of the following visualizations, I used a fellow student's tracks, Reinout W, which I personally enjoyed, found intriguing, and was curious what computational analysis may reveal about. This chromagram of a Reinout's second track, which reveals the distribution of the 12 musical pitch classes of the selected song. It shows relatively high instances of the C, D, E, G, and A pitch classes, with lower instances of the C#/Db, D#/Eb, F, F#Gb, G#/Ab, and A#/Bb classes. A chromagram represents pitch class content regardless of octave, making it useful for identifying harmonic structure and key
 
 I modified the template code by:
 
@@ -545,7 +642,7 @@ source("compmus.R")
   theme_dark() 
 ```
 
-### Analysis
+***
 
 This cepstrogram of the same track reveals a visual representation of the cepstrum of a signal over time, used for timbre analysis. It works by: computing a spectrogram (amplitude of a Fourier transform), then applying a second inverse Fourier Transform (cepstrum) -  which is the result of the logarithm of the estimated signal spectrum
 
