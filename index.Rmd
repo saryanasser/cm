@@ -13,6 +13,157 @@ library(flexdashboard)
 library(plotly)
 ```
 
+### Clustering
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(ggdendro)
+library(heatmaply)
+source("compmus.R")
+compmus2025 <- read_csv("compmus2025.csv")
+cluster_juice <-
+  recipe(
+    filename ~
+      arousal +
+      danceability +
+      instrumentalness +
+      tempo +
+      valence,
+    data = compmus2025
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  # step_range(all_predictors()) |> 
+  prep(compmus2025) |>
+  juice() |>
+  column_to_rownames("filename")
+compmus_dist <- dist(cluster_juice, method = "euclidean")
+compmus_dist |> 
+  hclust(method = "complete") |> # Try single, average, and complete.
+  dendro_data() |>
+  ggdendrogram()
+```
+
+### Heatmaps
+```{r}
+library(tidyverse)
+heatmaply(
+  cluster_juice,
+  hclustfun = hclust,
+  hclust_method = "average",  # Change for single, average, or complete linkage.
+  dist_method = "euclidean"
+)
+```
+
+```{r}
+compmus2025_filtered <- 
+  compmus2025 |> filter(!is.na(ai)) |> 
+  mutate(ai = factor(if_else(ai, "AI", "Non-AI")))
+classification_recipe <-
+  recipe(
+    ai ~
+      arousal +
+      danceability +
+      instrumentalness +
+      tempo +
+      valence,
+    data = compmus2025_filtered
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors())      # Converts to z-scores.
+  # step_range(all_predictors())    # Sets range to [0, 1].
+compmus_cv <- compmus2025_filtered |> vfold_cv(5)
+```
+
+### Revised Random Forest Classification
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(plotly)
+
+# Train a Random Forest model to get feature importance
+rf_model <- 
+  rand_forest(mode = "classification", trees = 500) |> 
+  set_engine("ranger", importance = "permutation")
+
+rf_workflow <- 
+  workflow() |> 
+  add_formula(ai ~ arousal + danceability + instrumentalness + tempo + valence) |> 
+  add_model(rf_model) |> 
+  fit(data = compmus2025_filtered)
+
+# Extract feature importance
+feature_importance <- 
+  extract_fit_parsnip(rf_workflow) |> 
+  vip::vi() |> 
+  arrange(desc(Importance)) |> 
+  head(3)  # Select the top 3 most important features
+
+# Select top features dynamically
+top_features <- feature_importance$Variable
+
+# Create a new plot with the top features
+p <- compmus2025_filtered |> 
+  ggplot(aes_string(x = top_features[1], y = top_features[2], colour = "ai", size = top_features[3])) +
+  geom_point(alpha = 0.8) +
+  scale_color_viridis_d() +
+  labs(
+    x = top_features[1],
+    y = top_features[2],
+    size = top_features[3],
+    colour = "AI"
+  ) +
+  theme_minimal()
+
+# Convert to interactive plot
+ggplotly(p)
+
+```
+
+***
+
+Revised Elements:
+
+Instead of using valence and tempo, the plot now displays instrumentalness (x-axis) and arousal (y-axis), which were identified as more important features by the random forest model.
+Danceability is used for point size, suggesting it plays a significant role in distinguishing AI vs. Non-AI music.
+
+Analysis:
+
+There is a negative correlation between instrumentalness (x-axis) and arousal (y-axis).
+As instrumentalness increases, arousal tends to decrease. This suggests that tracks with more instrumental content tend to be less energetic.
+
+AI-generated tracks appear more concentrated at higher instrumentalness values (0.7-0.9) and lower arousal values.
+Non-AI tracks are more spread out, with some occurring at lower instrumentalness values and higher arousal values. This suggests that AI music may favor more instrumental, low-energy compositions.
+
+Danceability is mapped to point size, showing variation across AI and Non-AI tracks.
+Larger points (high danceability) are spread throughout, meaning danceability does not show a strong trend with instrumentalness or arousal.
+
+It can be interpreted that AI-generated music might be more predictable and structured, focusing on instrumental, low-energy tracks, while Non-AI music covers a broader range, possibly due to human creativity and varied emotional expression.
+
+
+### Confusion Matrix
+```{r}
+library(tidymodels)
+knn_model <-
+  nearest_neighbor(neighbors = 1) |>
+  set_mode("classification") |> 
+  set_engine("kknn")
+classification_knn <- 
+  workflow() |> 
+  add_recipe(classification_recipe) |> 
+  add_model(knn_model) |> 
+  fit_resamples(compmus_cv, control = control_resamples(save_pred = TRUE))
+classification_knn |> 
+  collect_predictions() |> 
+  conf_mat(truth = ai, estimate = .pred_class) |> 
+  autoplot(type = "mosaic")
+```
+
+***
+
+The confusion chart on the left represents the performance of a classifier attempting to distinguish between AI-generated and non-AI-generated music. Using a nearest-neighbor classifier, the most important features selected for classification were: Instrumentalness, Danceability, Arousal, Valence, Tempo. 
+
+
 ### CLass Corpus Tempi Histogram
 ```{r}
 library(tidyverse)
@@ -40,7 +191,7 @@ There is a clear peak around 90-100 BPM, suggesting that this is the most freque
 ```{r}
 library(tidyverse)
 source("compmus.R")
-"features/reinout-w-2.json" |>
+"features/sarya-n-1.json" |>
   compmus_energy_novelty() |> 
   ggplot(aes(t, novelty)) +
   geom_line() +
@@ -50,7 +201,7 @@ source("compmus.R")
 
 ***
 
-The ``compmus_energy_novelty()` function estimates novelty based on sudden changes in loudness over time. It detects significant shifts in energy levels, which are useful for identifying musical onsets and transitions. For this particular track, there are evident onsets at approximately 10 and 70 seconds.
+The ``compmus_energy_novelty()` function estimates novelty based on sudden changes in loudness over time. It detects significant shifts in energy levels, which are useful for identifying musical onsets and transitions. For this particular track, there is an evident onset at approximately 10 seconds, with smaller onsets at 115 and 125 seconds. 
 
 
 
@@ -58,7 +209,7 @@ The ``compmus_energy_novelty()` function estimates novelty based on sudden chang
 ```{r}
 library(tidyverse)
 source("compmus.R")
-"features/reinout-w-2.json" |>
+"features/sarya-n-1.json" |>
   compmus_spectral_novelty() |> 
   ggplot(aes(t, novelty)) +
   geom_line() +
@@ -78,7 +229,7 @@ The `compmus_spectral_novelty()` function approximates spectral novelty by analy
 ### tempograms
 ```{r}
 library(gridExtra)
-regular_tempogram <- "features/reinout-w-2.json" |>
+regular_tempogram <- "features/sarya-n-1.json" |>
   compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
@@ -86,7 +237,7 @@ regular_tempogram <- "features/reinout-w-2.json" |>
   labs(x = "Time (s)", y = "Tempo (BPM)", title = "Regular Tempogram") +
   theme_dark()
 
-cyclic_tempogram <- "features/reinout-w-2.json" |>
+cyclic_tempogram <- "features/sarya-n-1.json" |>
   compmus_tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
@@ -189,7 +340,7 @@ key_templates <-
     "B:maj", circshift(major_key, 11),
     "D#:min", circshift(minor_key, 3)
   )
-"features/reinout-w-2.json" |> 
+"features/sarya-n-1.json" |> 
   compmus_chroma(norm = "identity") |> 
   compmus_match_pitch_templates(
     key_templates,         # Change to chord_templates if desired
@@ -294,7 +445,7 @@ key_templates <-
     "B:maj", circshift(major_key, 11),
     "D#:min", circshift(minor_key, 3)
   )
-"features/reinout-w-2.json" |> 
+"features/sarya-n-1.json" |> 
   compmus_chroma(norm = "identity") |> 
   compmus_match_pitch_templates(
     key_templates,         
@@ -398,7 +549,7 @@ key_templates <-
     "B:maj", circshift(major_key, 11),
     "D#:min", circshift(minor_key, 3)
   )
-"features/reinout-w-2.json" |> 
+"features/sarya-n-1.json" |> 
   compmus_chroma(norm = "identity") |> 
   compmus_match_pitch_templates(
     chord_templates,         # Changed to chord_templates to create chordogram
@@ -417,7 +568,7 @@ key_templates <-
 
 ```{r}
 source("compmus.R")
-"features/reinout-w-2.json" |>                           # Change the track
+"features/sarya-n-1.json" |>                           # Change the track
   compmus_chroma(norm = "chebyshev") |>                 # Change the norm
   compmus_self_similarity(
     feature = pc,
@@ -434,7 +585,7 @@ source("compmus.R")
 
 ```{r}
 source("compmus.R")
-"features/reinout-w-2.json" |>    
+"features/sarya-n-1.json" |>    
   compmus_mfccs(norm = "identity") |>                  # Change the norm
   compmus_self_similarity(
     feature = mfcc,
@@ -587,16 +738,44 @@ compmus2025 |>
   )  
 ```
 
+### Personal Tracks
 
-### Personal track descriptions
+I decided on exploring different genres that I like by asking different models for various genres of songs. I have always been a fan of post-punk, alternative rock music from the late 90s to early 2000s, such as Interpol, The Strokes, Bloc Party, Arctic Monkeys, Fontaines D.C. With the help of AI, I came up with this description to use as a prompt for gen AI music models: a high-energy alt rock / post-punk song with a melodic bassline, intricate drumming, and sharp and rhythmic guitar work, reminiscent of the bands Interpol and Bloc Party. dynamic, with tension-building verses leading into an explosive, anthemic chorus. create a sense of depth and intensity.” I also used this shortened version for models with character limits “Post-Punk, Driving Melodic Bassline, Angular Reverb-Drenched Guitars, Punchy Dynamic Drumming, Moody Detached Vocals, Urgent & Anthemic, Dark Yet Energetic, Tension-Building Composition, 140 BPM”. I have also recently been enjoying deep house music, so I decided to choose this genre as one of my songs. I used the following prompts, “deep house song that has a hypnotic beat, gradually layering warm synths, deep basslines, and subtle percussive beats, with a steady, entrancing rhythm. slow, cinematic build-ups that evoke nostalgia and euphoria. Incorporate atmospheric pads and a shimmering, time-dissolving feel of the track, with immersive, and emotionally uplifting verses and bridges, suitable for a sunset in the mountains” and “Deep House, Hypnotic Synth Pads, Pulsing Bassline, Rolling Four-on-the-Floor Groove, Atmospheric Textures, Slow-Building Progression, Dreamy Vocal Samples, Cinematic, Nostalgic, Expansive, 120 BPM”. I wanted to try a different genre that I also enjoy, something along the lines of Lana del Rey’s style. So I used the following prompts, “A cinematic baroque / dream pop composition that blends dreamy electronic synths with classical orchestration. Feature violins, melancholic clarinets, and rich trumpet swells, weaving through ethereal synth pads and delicate, reverberated piano. The rhythm should be slow and hypnotic, with a hazy, dreamlike quality. The vocals should be intimate yet grand, drenched in vintage-style reverb, with poetic, melancholic lyrics evoking themes of romance, nostalgia, and faded Hollywood glamour. Think of Lana Del Rey’s storytelling style, but with a modern dream pop twist—layered harmonies, sweeping crescendos, and an air of cinematic longing .” and “Baroque Pop / Dream Pop, Ethereal Synth Pads, Sweeping Violin & Clarinet Arrangements, Melancholic Trumpet Swells, Reverb-Drenched Intimate Vocals, Vintage Aesthetic, Poetic & Nostalgic, Cinematic & Grand, 80 BPM”. I explored the outputs of these prompts from various models including Suno, Stable Audio, Beatoven.ai, Soundverse.ai, Udio, and Mubert. Although I was hesitant to try Suno and Udio given their use of artists’ music without compensating them, I wanted to see whether there would be any differences in the quality, production output, relevance to the prompt, and similarity to expectations and existing songs.I found the vocal and lyrical qualities of most models to be of somewhat lower quality than I was expecting, with many songs sounding unnatural or AI generated (understandably).
 
-I decided on exploring different genres that I like by asking different models for various genres of songs. I have always been a fan of post-punk, alternative rock music from the late 90s to early 2000s, such as Interpol, The Strokes, Bloc Party, Arctic Monkeys, Fontaines D.C. With the help of AI, I came up with this description to use as a prompt for gen AI music models: a high-energy alt rock / post-punk song with a melodic bassline, intricate drumming, and sharp and rhythmic guitar work, reminiscent of the bands Interpol and Bloc Party. dynamic, with tension-building verses leading into an explosive, anthemic chorus. create a sense of depth and intensity.” I also used this shortened version for models with character limits “Post-Punk, Driving Melodic Bassline, Angular Reverb-Drenched Guitars, Punchy Dynamic Drumming, Moody Detached Vocals, Urgent & Anthemic, Dark Yet Energetic, Tension-Building Composition, 140 BPM”. I have also recently been enjoying deep house music, so I decided to choose this genre as one of my songs. I used the following prompts, “deep house song that has a hypnotic beat, gradually layering warm synths, deep basslines, and subtle percussive beats, with a steady, entrancing rhythm. slow, cinematic build-ups that evoke nostalgia and euphoria. Incorporate atmospheric pads and a shimmering, time-dissolving feel of the track, with immersive, and emotionally uplifting verses and bridges, suitable for a sunset in the mountains” and “Deep House, Hypnotic Synth Pads, Pulsing Bassline, Rolling Four-on-the-Floor Groove, Atmospheric Textures, Slow-Building Progression, Dreamy Vocal Samples, Cinematic, Nostalgic, Expansive, 120 BPM”. I wanted to try a different genre that I also enjoy, something along the lines of Lana del Rey’s style. So I used the following prompts, “A cinematic baroque / dream pop composition that blends dreamy electronic synths with classical orchestration. Feature violins, melancholic clarinets, and rich trumpet swells, weaving through ethereal synth pads and delicate, reverberated piano. The rhythm should be slow and hypnotic, with a hazy, dreamlike quality. The vocals should be intimate yet grand, drenched in vintage-style reverb, with poetic, melancholic lyrics evoking themes of romance, nostalgia, and faded Hollywood glamour. Think of Lana Del Rey’s storytelling style, but with a modern dream pop twist—layered harmonies, sweeping crescendos, and an air of cinematic longing .” and “Baroque Pop / Dream Pop, Ethereal Synth Pads, Sweeping Violin & Clarinet Arrangements, Melancholic Trumpet Swells, Reverb-Drenched Intimate Vocals, Vintage Aesthetic, Poetic & Nostalgic, Cinematic & Grand, 80 BPM”. I explored the outputs of these prompts from various models including Suno, Stable Audio, Beatoven.ai, Soundverse.ai, Udio, and Mubert. Although I was hesitant to try Suno and Udio given their use of artists’ music without compensating them, I wanted to see whether there would be any differences in the quality, production output, relevance to the prompt, and similarity to expectations and existing songs. I ended up deciding on the Stable Audio deep house track because it seemed to best match my expectations of emotive, intense, while also calming and not sounding too elaborate. I found the vocal and lyrical qualities of most models to be of somewhat lower quality than I was expecting, with many songs sounding unnatural or AI generated (understandably). I ended up deciding to go with another deep house song that I generated on Suno.  
+**My First Track**  
+Description:
+```
+I ended up deciding on the Stable Audio deep house track for my first track because it seemed to best match my expectations of emotive, intense, while also calming and not sounding too elaborate.
+```
 
-### Chromogram of a colleague's song 
+```{r, results='asis', echo=FALSE}
+cat('<audio controls>
+  <source src="/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/sarya-n-1.mp3">
+</audio>')
+```
+
+**My Second Track**  
+Description:  
+```
+For my second track, I ended up deciding to go with another deep house song that I generated on Suno.
+```
+
+```{r, results='asis', echo=FALSE}
+cat('<audio controls>
+  <source src="/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/sarya-n-2.mp3" type="audio/mpeg">
+</audio>')
+```
+
+### Chromogram for both songs
 
 ```{r}
+library(ggplot2)
+library(patchwork)
+
 source("compmus.R")
-"features/reinout-w-2.json" |>                           
+
+# Process the first track
+track1 <- "features/sarya-n-1.json" |>                           
   compmus_chroma(norm = "manhattan") |>                
   ggplot(aes(x = time, y = pc, fill = value)) + 
   geom_raster() +
@@ -609,27 +788,47 @@ source("compmus.R")
                 "G#", "A", "A#", "B"
               )
   ) +
-   scale_fill_viridis_c(option = "rocket", guide = "none") +             
-  labs(x = "Time (s)", y = NULL, fill = NULL) +
-  theme_light()                                      
+  scale_fill_viridis_c(option = "rocket", guide = "none") +             
+  labs(title = "Track 1", x = "Time (s)", y = NULL) +
+  theme_light()    
+
+# Process the second track
+track2 <- "features/sarya-n-2.json" |>                           
+  compmus_chroma(norm = "manhattan") |>                
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#", "D", "D#",
+                "E", "F", "F#", "G",
+                "G#", "A", "A#", "B"
+              )
+  ) +
+  scale_fill_viridis_c(option = "rocket", guide = "none") +             
+  labs(title = "Track 2", x = "Time (s)", y = NULL) +
+  theme_light()    
+
+# Combine the two plots side by side
+track1 + track2
 
 ```
 
 ***
-
-The Essentia features of my own tracks were not available for analysis, so for the basis of the following visualizations, I used a fellow student's tracks, Reinout W, which I personally enjoyed, found intriguing, and was curious what computational analysis may reveal about. This chromagram of a Reinout's second track, which reveals the distribution of the 12 musical pitch classes of the selected song. It shows relatively high instances of the C, D, E, G, and A pitch classes, with lower instances of the C#/Db, D#/Eb, F, F#Gb, G#/Ab, and A#/Bb classes. A chromagram represents pitch class content regardless of octave, making it useful for identifying harmonic structure and key
 
 I modified the template code by:
 
 1. Changing the `norm` parameter, which affects how the chroma features are normalized: I chose the `manhattan` norm to retain musical structure
 2. Changing the theme and color scales: For personalization and variation on the visual clarity, I used the rocket coolor scale and the light theme option
 
+A side-by-side analysis of the chromograms of my two tracks reveals the distribution of the 12 musical pitch classes of each song.  A chromagram represents pitch class content regardless of octave, making it useful for identifying harmonic structure and key. Track 1 shows relatively high instances of the F#, F, and E pitch classes, with lower instances of the C class. Track 2 shoqws common occurrence of the A#, F#, D#, and C# pitch classes. The first track seems more consistent in terms of chroma distribution across time, as it is a deep house song with a consistent build up, while track 2 has more irregular fluctuations, possibly indicating more dynamic harmonic shifts or different instrumentation, as the track is more upbeat, joyful, and playful. 
 
 ### Cepstrogram 
 
 ```{r}
 source("compmus.R")
-"features/reinout-w-2.json" |>                           # Change the track
+"features/sarya-n-1.json" |>                           # Change the track
   compmus_mfccs(norm = "euclidean") |>                  # Change the norm
   ggplot(aes(x = time, y = mfcc, fill = value)) + 
   geom_raster() +
@@ -650,7 +849,6 @@ I modified the template code by:
 
 1. Changing the `norm` parameter, which affects how the chroma features are normalized: I chose the `euclidean` norm, sued for high-dimensional data and to emphasize clarity.
 2. Changing the theme and color scales: For personalization and variation on the visual clarity, I used the rocket color scale and the dark theme option
-
 
 ### Conclusion / Discussion
 
