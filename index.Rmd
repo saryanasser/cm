@@ -13,246 +13,292 @@ library(flexdashboard)
 library(plotly)
 ```
 
-### Clustering
-```{r}
-library(tidyverse)
-library(tidymodels)
-library(ggdendro)
-library(heatmaply)
-source("compmus.R")
-compmus2025 <- read_csv("compmus2025.csv")
-cluster_juice <-
-  recipe(
-    filename ~
-      arousal +
-      danceability +
-      instrumentalness +
-      tempo +
-      valence,
-    data = compmus2025
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors()) |> 
-  # step_range(all_predictors()) |> 
-  prep(compmus2025) |>
-  juice() |>
-  column_to_rownames("filename")
-compmus_dist <- dist(cluster_juice, method = "euclidean")
-compmus_dist |> 
-  hclust(method = "complete") |> # Try single, average, and complete.
-  dendro_data() |>
-  ggdendrogram()
+### Introduction
+
+Welcome to my Computational Musicology portfolio for 2025! This storyboard contains my perspective on the examples from each week, presenting an exploration of AI- and human- generated tracks through various visualizations implemented using R and flexdashboard. 
+
+My submitted tracks were entirely AI-generated, and were used, alongside the class corpus, to extract insightful trends, patterns, and takeaways from AI- and human- generated music. The dataset includes Essentia track-level features, including arousal, danceability, intrumentalenss, tempo, and valence. Key insights are drawn from the tracks' detailed spectral, temporal, and harmonic characteristics through visualizations such as chromograms, cepstrograms, self-similarity charts, keygrams, chordograms, tempograms, histograms, and energy novelty charts.  
+
+
+![Portfolio 2025, credits; https://www.google.com/url?sa=i&url=http%3A%2F%2Fgyulabodonyi.com%2Fmusic-visualization%2F&psig=AOvVaw3R141Xm5ROKzaMw0YacZhl&ust=1740153548874000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCKiX7-rP0osDFQAAAAAdAAAAABAE](/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/music_visualisation.jpg){width=500px}
+
+### Personal Tracks
+
+I decided on exploring different genres that I like by asking different models for various genres of songs. I have always been a fan of post-punk, alternative rock music from the late 90s to early 2000s, such as Interpol, The Strokes, Bloc Party, Arctic Monkeys, Fontaines D.C. With the help of AI, I came up with this description to use as a prompt for gen AI music models: a high-energy alt rock / post-punk song with a melodic bassline, intricate drumming, and sharp and rhythmic guitar work, reminiscent of the bands Interpol and Bloc Party. dynamic, with tension-building verses leading into an explosive, anthemic chorus. create a sense of depth and intensity.” I also used this shortened version for models with character limits “Post-Punk, Driving Melodic Bassline, Angular Reverb-Drenched Guitars, Punchy Dynamic Drumming, Moody Detached Vocals, Urgent & Anthemic, Dark Yet Energetic, Tension-Building Composition, 140 BPM”. I have also recently been enjoying deep house music, so I decided to choose this genre as one of my songs. I used the following prompts, “deep house song that has a hypnotic beat, gradually layering warm synths, deep basslines, and subtle percussive beats, with a steady, entrancing rhythm. slow, cinematic build-ups that evoke nostalgia and euphoria. Incorporate atmospheric pads and a shimmering, time-dissolving feel of the track, with immersive, and emotionally uplifting verses and bridges, suitable for a sunset in the mountains” and “Deep House, Hypnotic Synth Pads, Pulsing Bassline, Rolling Four-on-the-Floor Groove, Atmospheric Textures, Slow-Building Progression, Dreamy Vocal Samples, Cinematic, Nostalgic, Expansive, 120 BPM”. I wanted to try a different genre that I also enjoy, something along the lines of Lana del Rey’s style. So I used the following prompts, “A cinematic baroque / dream pop composition that blends dreamy electronic synths with classical orchestration. Feature violins, melancholic clarinets, and rich trumpet swells, weaving through ethereal synth pads and delicate, reverberated piano. The rhythm should be slow and hypnotic, with a hazy, dreamlike quality. The vocals should be intimate yet grand, drenched in vintage-style reverb, with poetic, melancholic lyrics evoking themes of romance, nostalgia, and faded Hollywood glamour. Think of Lana Del Rey’s storytelling style, but with a modern dream pop twist—layered harmonies, sweeping crescendos, and an air of cinematic longing .” and “Baroque Pop / Dream Pop, Ethereal Synth Pads, Sweeping Violin & Clarinet Arrangements, Melancholic Trumpet Swells, Reverb-Drenched Intimate Vocals, Vintage Aesthetic, Poetic & Nostalgic, Cinematic & Grand, 80 BPM”. I explored the outputs of these prompts from various models including Suno, Stable Audio, Beatoven.ai, Soundverse.ai, Udio, and Mubert. Although I was hesitant to try Suno and Udio given their use of artists’ music without compensating them, I wanted to see whether there would be any differences in the quality, production output, relevance to the prompt, and similarity to expectations and existing songs.I found the vocal and lyrical qualities of most models to be of somewhat lower quality than I was expecting, with many songs sounding unnatural or AI generated (understandably).
+
+**My First Track**  
+Description:
+```
+I ended up deciding on the Stable Audio deep house track for my first track because it seemed to best match my expectations of emotive, intense, while also calming and not sounding too elaborate.
 ```
 
-### Heatmaps
-```{r}
-library(tidyverse)
-heatmaply(
-  cluster_juice,
-  hclustfun = hclust,
-  hclust_method = "average",  # Change for single, average, or complete linkage.
-  dist_method = "euclidean"
-)
+```{r, results='asis', echo=FALSE}
+cat('<audio controls>
+  <source src="/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/sarya-n-1.mp3">
+</audio>')
 ```
 
-```{r}
-compmus2025_filtered <- 
-  compmus2025 |> filter(!is.na(ai)) |> 
-  mutate(ai = factor(if_else(ai, "AI", "Non-AI")))
-classification_recipe <-
-  recipe(
-    ai ~
-      arousal +
-      danceability +
-      instrumentalness +
-      tempo +
-      valence,
-    data = compmus2025_filtered
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors())      # Converts to z-scores.
-  # step_range(all_predictors())    # Sets range to [0, 1].
-compmus_cv <- compmus2025_filtered |> vfold_cv(5)
+**My Second Track**  
+Description:  
+```
+For my second track, I ended up deciding to go with another deep house song that I generated on Suno.
 ```
 
-### Revised Random Forest Classification
+```{r, results='asis', echo=FALSE}
+cat('<audio controls>
+  <source src="/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/sarya-n-2.mp3" type="audio/mpeg">
+</audio>')
+```
+
+### Visualising the AI Song Contest
+
 ```{r}
-library(tidyverse)
-library(tidymodels)
-library(plotly)
-
-# Train a Random Forest model to get feature importance
-rf_model <- 
-  rand_forest(mode = "classification", trees = 500) |> 
-  set_engine("ranger", importance = "permutation")
-
-rf_workflow <- 
-  workflow() |> 
-  add_formula(ai ~ arousal + danceability + instrumentalness + tempo + valence) |> 
-  add_model(rf_model) |> 
-  fit(data = compmus2025_filtered)
-
-# Extract feature importance
-feature_importance <- 
-  extract_fit_parsnip(rf_workflow) |> 
-  vip::vi() |> 
-  arrange(desc(Importance)) |> 
-  head(3)  # Select the top 3 most important features
-
-# Select top features dynamically
-top_features <- feature_importance$Variable
-
-# Create a new plot with the top features
-p <- compmus2025_filtered |> 
-  ggplot(aes_string(x = top_features[1], y = top_features[2], colour = "ai", size = top_features[3])) +
-  geom_point(alpha = 0.8) +
-  scale_color_viridis_d() +
-  labs(
-    x = top_features[1],
-    y = top_features[2],
-    size = top_features[3],
-    colour = "AI"
+aisc2024 <- read_csv("/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/saryanasser/aisc2024.csv")
+aisc2024 |>                   # Start with the data
+  ggplot(                     # Set up the plot.
+    aes(
+      x = tempo,
+      y = arousal,
+      size = instrumentalness,
+      colour = danceability
+    )
   ) +
-  theme_minimal()
-
-# Convert to interactive plot
-ggplotly(p)
-
+  geom_point() +              # Scatter plot.
+  geom_rug(linewidth = 0.1) + # Add 'fringes' to show data distribution.
+  geom_text(                  # Add text labels from above.
+    x = 121,
+    y = 4.91,
+    label = "Onda Corta - Sud America",
+    size = 3,                 # Override size (not loudness here).
+    hjust = "left",           # Align left side of label with the point.
+    vjust = "center",         # Align vertical centre of label with the point.
+    angle = 30                # Rotate the text label
+  ) +
+  scale_x_continuous(         # Fine-tune the x axis.
+    limits = c(50, 200),
+    breaks = c(50, 100, 150, 200), # Specify grid lines
+    minor_breaks = NULL       # Remove 'minor' grid lines.
+  ) +
+  scale_y_continuous(         # Fine-tune the y axis in the same way.
+    limits = c(1, 9),
+    breaks = c(1, 5, 9),
+    minor_breaks = NULL
+  ) +
+  scale_colour_viridis_c() +  # Use the popular viridis colour palette.
+  scale_size_continuous(      # Fine-tune the sizes of each point.
+    trans = "exp",            # Use an exp transformation to emphasise loud..
+    guide = "none"            # Remove the legend for size.
+  ) +
+  theme_light() +             # Use a simpler theme.
+  labs(                       # Make the titles nice.
+    x = "Tempo",
+    y = "Arousal",
+    colour = "Danceability"
+  )
+ggplotly()
 ```
 
 ***
 
-Revised Elements:
+This is the bad visualisation of the AI Song Contest we used in our first lab session, this time in a dashboard.
 
-Instead of using valence and tempo, the plot now displays instrumentalness (x-axis) and arousal (y-axis), which were identified as more important features by the random forest model.
-Danceability is used for point size, suggesting it plays a significant role in distinguishing AI vs. Non-AI music.
+### Visualising the AI Song Contest 2
 
-Analysis:
-
-There is a negative correlation between instrumentalness (x-axis) and arousal (y-axis).
-As instrumentalness increases, arousal tends to decrease. This suggests that tracks with more instrumental content tend to be less energetic.
-
-AI-generated tracks appear more concentrated at higher instrumentalness values (0.7-0.9) and lower arousal values.
-Non-AI tracks are more spread out, with some occurring at lower instrumentalness values and higher arousal values. This suggests that AI music may favor more instrumental, low-energy compositions.
-
-Danceability is mapped to point size, showing variation across AI and Non-AI tracks.
-Larger points (high danceability) are spread throughout, meaning danceability does not show a strong trend with instrumentalness or arousal.
-
-It can be interpreted that AI-generated music might be more predictable and structured, focusing on instrumental, low-energy tracks, while Non-AI music covers a broader range, possibly due to human creativity and varied emotional expression.
-
-
-### Confusion Matrix
 ```{r}
-library(tidymodels)
-knn_model <-
-  nearest_neighbor(neighbors = 1) |>
-  set_mode("classification") |> 
-  set_engine("kknn")
-classification_knn <- 
-  workflow() |> 
-  add_recipe(classification_recipe) |> 
-  add_model(knn_model) |> 
-  fit_resamples(compmus_cv, control = control_resamples(save_pred = TRUE))
-classification_knn |> 
-  collect_predictions() |> 
-  conf_mat(truth = ai, estimate = .pred_class) |> 
-  autoplot(type = "mosaic")
+aisc2024 |> 
+  ggplot(aes(x = tempo, y = arousal, color = danceability)) +
+  geom_point(alpha = 0.7, aes(size = instrumentalness)) +  # Add transparency for visibility
+  geom_smooth(method = "loess", color = "black", linetype = "dashed", se = FALSE) +  # Trend line for clarity
+  scale_x_continuous(
+    limits = c(50, 200),
+    breaks = seq(50, 200, by = 50)
+  ) +
+  scale_y_continuous(
+    limits = c(1, 9),
+    breaks = c(1, 5, 9)
+  ) +
+  scale_color_viridis_c(option = "plasma") +  # Use a distinct, high-contrast palette
+  scale_size(range = c(1, 6)) +  # Keep point sizes meaningful
+  theme_minimal(base_size = 14) +  # Cleaner theme with larger text
+  labs(
+    title = "AI Song Contest 2024: Tempo vs. Arousal",
+    subtitle = "Danceability indicated by color, instrumentalness by size",
+    x = "Tempo (BPM)",
+    y = "Arousal (Energy Level)",
+    color = "Danceability",
+    size = "Instrumentalness"
+  ) +
+  theme(legend.position = "bottom")  # Move legend to avoid overlap
+ggplotly()
+```
+***
+To improve and build upon the first visualization, I sought to formulate a story by improving the look of the visualization, making it more readable. I went about doing this by:
+
+1. Removing elements like `geom_rug()` that did not add much value  
+2. Adjusting labels, font sizes, and layout to improve clarity  
+3. Adding trend lines or facets for better pattern recognition, enhancing comparisons  
+4. Using the size and color variables in a meaningful way  
+
+This updated version:  
+
+✅ Clearly shows tempo vs. arousal trends  
+✅ Uses color and size effectively  
+✅ Highlights overall trends with a dashed trend line  
+✅ Has a clean and readable layout  
+
+### compmus120125 corpus 
+
+```{r}
+compmus2025 <- read_csv("/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/saryanasser/compmus2025.csv")
+compmus2025 |> 
+  ggplot(aes(x = tempo, y = arousal, color = danceability)) +
+  geom_point(alpha = 0.7, aes(size = instrumentalness)) +  # Transparency for visibility
+  geom_smooth(method = "loess", color = "black", linetype = "dashed", se = FALSE) +  # Trend line
+  scale_x_continuous(limits = c(50, 200), breaks = seq(50, 200, by = 50)) +
+  scale_y_continuous(limits = c(1, 9), breaks = c(1, 5, 9)) +
+  scale_color_viridis_c(option = "plasma") +  # High-contrast palette
+  scale_size(range = c(1, 6)) +  # Meaningful point sizes
+  theme_dark(base_size = 14) +  # More readable theme
+  labs(
+    title = "Computational Musicology Corpus 2025: Tempo vs. Arousal",
+    subtitle = "Danceability indicated by color, instrumentalness by size",
+    x = "Tempo (BPM)",
+    y = "Arousal (Energy Level)",
+    color = "Danceability",
+    size = "Instrumentalness"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 12),  # Center & bold title
+    plot.subtitle = element_text(hjust = 0.5, size = 14),  # Center subtitle
+    plot.margin = margin(10, 10, 10, 10),  # Adds padding
+    legend.position = "bottom",
+    legend.box = "vertical"
+  )  
 ```
 
-***
+### Chromogram for my 2 songs
 
-The confusion chart on the left represents the performance of a classifier attempting to distinguish between AI-generated and non-AI-generated music. Using a nearest-neighbor classifier, the most important features selected for classification were: Instrumentalness, Danceability, Arousal, Valence, Tempo. 
-
-
-### CLass Corpus Tempi Histogram
 ```{r}
-library(tidyverse)
+library(ggplot2)
+library(patchwork)
 
-# Load the dataset
-compmus_data <- read_csv("compmus2025.csv")
-
-# Create a histogram of the "tempo" column
-ggplot(compmus_data, aes(x = tempo)) +
-  geom_histogram(binwidth = 5, fill = "deeppink4", color = "black") +
-  labs(title = "Histogram of Tempi in Class Corpus",
-       x = "Tempo (BPM)",
-       y = "Count") +
-  theme_minimal()
-
-```
-
-***
-
-There is a clear peak around 90-100 BPM, suggesting that this is the most frequent tempo range in the class corpus. It is also interesting that there are multiple peaks, suggesting that there is a diverse set of tempos rather than a single dominant one. There are also some tracks in the lower tempo range (below 50 BPM), possibly due to half-time interpretations.
-
-
-
-### Tempogram Energy Novelty
-```{r}
-library(tidyverse)
 source("compmus.R")
-"features/sarya-n-1.json" |>
-  compmus_energy_novelty() |> 
-  ggplot(aes(t, novelty)) +
-  geom_line() +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Energy Novelty")
+
+# Process the first track
+track1 <- "features/sarya-n-1.json" |>                           
+  compmus_chroma(norm = "manhattan") |>                
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#", "D", "D#",
+                "E", "F", "F#", "G",
+                "G#", "A", "A#", "B"
+              )
+  ) +
+  scale_fill_viridis_c(option = "rocket", guide = "none") +             
+  labs(title = "Track 1", x = "Time (s)", y = NULL) +
+  theme_light()    
+
+# Process the second track
+track2 <- "features/sarya-n-2.json" |>                           
+  compmus_chroma(norm = "manhattan") |>                
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#", "D", "D#",
+                "E", "F", "F#", "G",
+                "G#", "A", "A#", "B"
+              )
+  ) +
+  scale_fill_viridis_c(option = "rocket", guide = "none") +             
+  labs(title = "Track 2", x = "Time (s)", y = NULL) +
+  theme_light()    
+
+# Combine the two plots side by side
+track1 + track2
+
 ```
 
 ***
 
-The ``compmus_energy_novelty()` function estimates novelty based on sudden changes in loudness over time. It detects significant shifts in energy levels, which are useful for identifying musical onsets and transitions. For this particular track, there is an evident onset at approximately 10 seconds, with smaller onsets at 115 and 125 seconds. 
+I modified the template code by:
 
+1. Changing the `norm` parameter, which affects how the chroma features are normalized: I chose the `manhattan` norm to retain musical structure
+2. Changing the theme and color scales: For personalization and variation on the visual clarity, I used the rocket coolor scale and the light theme option
 
+A side-by-side analysis of the chromograms of my two tracks reveals the distribution of the 12 musical pitch classes of each song.  A chromagram represents pitch class content regardless of octave, making it useful for identifying harmonic structure and key. Track 1 shows relatively high instances of the F#, F, and E pitch classes, with lower instances of the C class. Track 2 shoqws common occurrence of the A#, F#, D#, and C# pitch classes. The first track seems more consistent in terms of chroma distribution across time, as it is a deep house song with a consistent build up, while track 2 has more irregular fluctuations, possibly indicating more dynamic harmonic shifts or different instrumentation, as the track is more upbeat, joyful, and playful. 
 
-### Cepstrogram Spectral Novelty
+### Cepstrogram 
+
 ```{r}
-library(tidyverse)
 source("compmus.R")
-"features/sarya-n-1.json" |>
-  compmus_spectral_novelty() |> 
-  ggplot(aes(t, novelty)) +
-  geom_line() +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Spectral Novelty")
+"features/sarya-n-1.json" |>                           # Change the track
+  compmus_mfccs(norm = "euclidean") |>                  # Change the norm
+  ggplot(aes(x = time, y = mfcc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:12,
+    minor_breaks = NULL,
+  ) +
+  scale_fill_viridis_c(option = "rocket", guide = "none") +               # Change the colours?
+  labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+  theme_dark() 
 ```
 
 ***
 
-The `compmus_spectral_novelty()` function approximates spectral novelty by analyzing cepstrograms, which represent changes in the frequency content of a signal, detecting harmonic or timbral shifts better than energy-based novelty. Because this visualization seems more consistent that that of the energy novelty, it can be deduced that there is less spectral variation and more energy novelty. 
+This cepstrogram of track 1 reveals a visual representation of the cepstrum of a signal over time, used for timbre analysis. It works by: computing a spectrogram (amplitude of a Fourier transform), then applying a second inverse Fourier Transform (cepstrum) -  which is the result of the logarithm of the estimated signal spectrum
 
+I modified the template code by:
 
+1. Changing the `norm` parameter, which affects how the chroma features are normalized: I chose the `euclidean` norm, suited for high-dimensional data and to emphasize clarity.
+2. Changing the theme and color scales: For personalization and variation on the visual clarity, I used the rocket color scale and the dark theme option
 
+### Chroma-based self-similarity
 
-
-
-### tempograms
 ```{r}
-library(gridExtra)
-regular_tempogram <- "features/sarya-n-1.json" |>
-  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
-  ggplot(aes(x = time, y = bpm, fill = power)) +
+source("compmus.R")
+"features/sarya-n-1.json" |>                           # Change the track
+  compmus_chroma(norm = "chebyshev") |>                 # Change the norm
+  compmus_self_similarity(
+    feature = pc,
+    distance = "cosine"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(option = "rocket", guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Regular Tempogram") +
-  theme_dark()
+  scale_fill_viridis_c(option = "mako", guide = "none") +  # Change color scale          
+  labs(x = "Time (s)", y = NULL, fill = NULL) +
+  theme_dark()                                      # Change the theme?
+```
 
-cyclic_tempogram <- "features/sarya-n-1.json" |>
-  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
-  ggplot(aes(x = time, y = bpm, fill = power)) +
+### Timbre-based self-similarity
+
+```{r}
+source("compmus.R")
+"features/sarya-n-1.json" |>    
+  compmus_mfccs(norm = "identity") |>                  # Change the norm
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"                             # Change the distance
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(option = "rocket", guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Cyclic Tempogram") +
-  theme_dark()
-
-grid.arrange(regular_tempogram, cyclic_tempogram, ncol = 2)
+  scale_fill_viridis_c(option = "turbo", guide = "none")   +            # Change the colours?
+  labs(x = "Time (s)", y = NULL, fill = NULL) +
+  theme_dark()   
 ```
 
 ***
 
-The regular tempogram shows several tempo harmonics (observable lines at increasing bpm values of 150, 300, 450). This suggests that the music contains strong rhythmic subdivisions, reinforcing multiple layers of the base tempo. The high presence of harmonics suggests a steady and rhythmic beat structure, likely because it is an electronic / techno track. The lack of tempo variation over time indicates that the tempo remains stable throughout the track.
-On the other hand, the cyclic tempogram shows a dominant tempo of around 150 bpm, with a weaker subharmonic at around 110 bpm. 
+Chroma- vs Timbre- based self-similarity for track 1:
 
+Timbre features, often represented by MFCCs (Mel-Frequency Cepstral Coefficients), capture the spectral characteristics of the sound. This timbre-based self-similarity chart highlights instrumental changes and overall sound quality / production shifts.The effectiveness of chroma- or timbre-based self-similarity for structural analysis depends on the specific characteristics of the track: While the chroma-based self-similarity captures harmonic progressions, tonal structure, key changes, and chord progressions (providing clearer structural pictures for tracks with harmonic content such as pop , jazz and classical music),  timbre-based self-similarity captures instrumental texture and sound quality, outlining changes in orchestration, dynamics, and articulation. Because my chosen track is a more electronic / EDM song, its timbre features are at the forefront, making the timbre-based self-similarity chart more insightful. The timbre-based self-similarity chart portrays the tracks repeated instrumental sections through the prominent diagonal lines with sudden shifts indicating timbral changes (the introduction of new instruments)
 
 ### Keygram
 
@@ -357,7 +403,7 @@ key_templates <-
 
 ***
 
-Using the 1–0 coding for the chord templates, I generated a Keygram for Reinout's second track. This Keygram makes use of the new helper function `compmus_match_pitch_templates`, which compares the averaged chroma vectors against templates. Generally, a keygram shows the progression of chords over time by matching chroma features (pitch class profiles) to predefined chord templates. The visualization represents which chords are most likely at each point in time. For instance, for the chosen track, dark colors, such as at the start of the track and around the 70-80 second range, represent short distances / differences between the recorded chords and the template. keygrams help identify harmonic progressions, modulations, and changes in harmony over time.
+Using the 1–0 coding for the chord templates, I generated a Keygram for my first track. This Keygram makes use of the new helper function `compmus_match_pitch_templates`, which compares the averaged chroma vectors against templates. Generally, a keygram shows the progression of chords over time by matching chroma features (pitch class profiles) to predefined chord templates. The visualization represents which chords are most likely at each point in time. For instance, for the chosen track, dark colors, such as at the start of the track and around the 70-80 second range, represent short distances / differences between the recorded chords and the template. keygrams help identify harmonic progressions, modulations, and changes in harmony over time.
 
 ### Keygram using Temperley's proposed improvements
 
@@ -563,293 +609,194 @@ key_templates <-
   theme_light()                                      # Change the theme?
 ```
 
+***
 
-### Chroma-based self-similarity
+A chordogram is a visual representation of the harmonic structure of a song over time. It maps how different chords are present throughout the track. The x-axis represents time (in seconds), while the y-axis lists different chord templates. The color intensity indicates how strongly a given chord is detected at a particular time, with darker shades showing stronger matches. The darker bands suggest that chords such as :maj, G major, F major, and D minor are frequently occurring. The song features dynamic shifts, where may chord changes can be heard in more rhythmic sections, such as at 47 seconds where visible variations in chord intensity appear. 
 
+
+### tempograms for track 1
 ```{r}
-source("compmus.R")
-"features/sarya-n-1.json" |>                           # Change the track
-  compmus_chroma(norm = "chebyshev") |>                 # Change the norm
-  compmus_self_similarity(
-    feature = pc,
-    distance = "cosine"                             # Change the distance
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+library(gridExtra)
+regular_tempogram <- "features/sarya-n-1.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
-  scale_fill_viridis_c(option = "mako", guide = "none") +  # Change color scale          
-  labs(x = "Time (s)", y = NULL, fill = NULL) +
-  theme_dark()                                      # Change the theme?
-```
+  scale_fill_viridis_c(option = "rocket", guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Regular Tempogram") +
+  theme_dark()
 
-### Timbre-based self-similarity
-
-```{r}
-source("compmus.R")
-"features/sarya-n-1.json" |>    
-  compmus_mfccs(norm = "identity") |>                  # Change the norm
-  compmus_self_similarity(
-    feature = mfcc,
-    distance = "euclidean"                             # Change the distance
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+cyclic_tempogram <- "features/sarya-n-1.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
-  scale_fill_viridis_c(option = "turbo", guide = "none")   +            # Change the colours?
-  labs(x = "Time (s)", y = NULL, fill = NULL) +
-  theme_dark()   
+  scale_fill_viridis_c(option = "rocket", guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title = "Cyclic Tempogram") +
+  theme_dark()
+
+grid.arrange(regular_tempogram, cyclic_tempogram, ncol = 2)
 ```
 
 ***
 
-Chroma- vs Timbre- based self-similarity:
+A tempogram is a time-tempo representation that encodes the local tempo of a music signal over time. It provides a visual representation of how the tempo of a piece of music changes throughout its duration. Tempograms are useful for analyzing and understanding the rhythmic structure and tempo variations in musical compositions. The regular tempogram shows several tempo harmonics (observable lines at bpm values of 150, 220, 380, 500, 600). This suggests that the music contains strong rhythmic subdivisions, reinforcing multiple layers of the base tempo. The high presence of harmonics suggests a steady and rhythmic beat structure, likely because it is an electronic / techno track. The lack of tempo variation over time indicates that the tempo remains stable throughout the track. The brighter regions (e.g., near 100 seconds) show moments where certain tempo components are dominant, reflecting rhythmic changes or intensifications, which are confirmed after reviewing the track.
+On the other hand, the cyclic tempogram is limited to a cyclic range (80–160 BPM), which focuses on musically relevant tempos and avoids higher harmonics. It reveals a dominant tempo of around 120 bpm, with weaker subharmonics at around 90 & 150 bpm. 
 
-Timbre features, often represented by MFCCs (Mel-Frequency Cepstral Coefficients), capture the spectral characteristics of the sound. This timbre-based self-similarity chart highlights instrumental changes and overall sound quality / production shifts.The effectiveness of chroma- or timbre-based self-similarity for structural analysis depends on the specific characteristics of the track: While the chroma-based self-similarity captures harmonic progressions, tonal structure, key changes, and chord progressions (providing clearer structural pictures for tracks with harmonic content such as pop , jazz and classical music),  timbre-based self-similarity captures instrumental texture and sound quality, outlining changes in orchestration, dynamics, and articulation. Because my chosen track is a more electronic / EDM song, its timbre features are at the forefront, making the timbre-based self-similarity chart more insightful. The timbre-based self-similarity chart portrays the tracks repeated instrumental sections through the prominent diagonal lines with sudden shifts indicating timbral changes (the introduction of new instruments)
-
-### Introduction
-
-Welcome to my Computational Musicology portfolio for 2025! This storyboard contains my perspective on the examples from each week.
+The regular tempogram captures broader harmonic structures, while the cyclic tempogram focuses on musically significant tempo ranges, making it easier to identify the main tempo.
 
 
-![Portfolio 2025, credits; https://www.google.com/url?sa=i&url=http%3A%2F%2Fgyulabodonyi.com%2Fmusic-visualization%2F&psig=AOvVaw3R141Xm5ROKzaMw0YacZhl&ust=1740153548874000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCKiX7-rP0osDFQAAAAAdAAAAABAE](/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/music_visualisation.jpg){width=500px}
-
-
-### Visualising the AI Song Contest
-
+### Class Corpus Tempi Histogram
 ```{r}
-aisc2024 <- read_csv("/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/saryanasser/aisc2024.csv")
-aisc2024 |>                   # Start with the data
-  ggplot(                     # Set up the plot.
-    aes(
-      x = tempo,
-      y = arousal,
-      size = instrumentalness,
-      colour = danceability
-    )
-  ) +
-  geom_point() +              # Scatter plot.
-  geom_rug(linewidth = 0.1) + # Add 'fringes' to show data distribution.
-  geom_text(                  # Add text labels from above.
-    x = 121,
-    y = 4.91,
-    label = "Onda Corta - Sud America",
-    size = 3,                 # Override size (not loudness here).
-    hjust = "left",           # Align left side of label with the point.
-    vjust = "center",         # Align vertical centre of label with the point.
-    angle = 30                # Rotate the text label
-  ) +
-  scale_x_continuous(         # Fine-tune the x axis.
-    limits = c(50, 200),
-    breaks = c(50, 100, 150, 200), # Specify grid lines
-    minor_breaks = NULL       # Remove 'minor' grid lines.
-  ) +
-  scale_y_continuous(         # Fine-tune the y axis in the same way.
-    limits = c(1, 9),
-    breaks = c(1, 5, 9),
-    minor_breaks = NULL
-  ) +
-  scale_colour_viridis_c() +  # Use the popular viridis colour palette.
-  scale_size_continuous(      # Fine-tune the sizes of each point.
-    trans = "exp",            # Use an exp transformation to emphasise loud..
-    guide = "none"            # Remove the legend for size.
-  ) +
-  theme_light() +             # Use a simpler theme.
-  labs(                       # Make the titles nice.
-    x = "Tempo",
+library(tidyverse)
+
+# Load the dataset
+compmus_data <- read_csv("compmus2025.csv")
+
+# Create a histogram of the "tempo" column
+ggplot(compmus_data, aes(x = tempo)) +
+  geom_histogram(binwidth = 5, fill = "deeppink4", color = "black") +
+  labs(title = "Histogram of Tempi in Class Corpus",
+       x = "Tempo (BPM)",
+       y = "Count") +
+  theme_minimal()
+ggplotly()
+```
+
+***
+I decided to create a histogram of the class corpus to observe the most common tempi. There is a clear peak around 90-100 BPM, suggesting that this is the most frequent tempo range in the class corpus. It is also interesting that there are multiple peaks, suggesting that there is a diverse set of tempos rather than a single dominant one. There are also some tracks in the lower tempo range (below 50 BPM), possibly due to half-time interpretations.
+
+### Energy & Spectral Novelty
+```{r}
+library(tidyverse)
+library(gridExtra)
+source("compmus.R")
+
+energy_novelty_plot <- "features/sarya-n-1.json" |>
+  compmus_energy_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Energy Novelty", title = "Tempogram Energy Novelty")
+
+spectral_novelty_plot <- "features/sarya-n-1.json" |>
+  compmus_spectral_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Spectral Novelty", title = "Cepstrogram Spectral Novelty")
+
+grid.arrange(energy_novelty_plot, spectral_novelty_plot, ncol = 2)
+```
+
+***
+
+The ``compmus_energy_novelty()` function estimates novelty based on sudden changes in loudness over time. It detects significant shifts in energy levels, which are useful for identifying musical onsets and transitions. For this particular track, there is an evident onset at approximately 10 seconds, with smaller onsets at 115 and 125 seconds.
+
+The `compmus_spectral_novelty()` function approximates spectral novelty by analyzing cepstrograms, which represent changes in the frequency content of a signal, detecting harmonic or timbral shifts better than energy-based novelty. Because this visualization seems more consistent that that of the energy novelty, it can be deduced that there is less spectral variation and more energy novelty.
+
+### Revised Random Forest Classification
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(plotly)
+
+compmus2025_filtered |>
+  ggplot(aes(x = valence, y = arousal, colour = ai, size = tempo)) +
+  geom_point(alpha = 0.8) +
+  scale_color_viridis_d() +
+  labs(
+    x = "Valence",
     y = "Arousal",
-    colour = "Danceability"
+    size = "Tempo",
+    colour = "AI"
   )
-ggplotly()
-```
 
-***
+# Train a Random Forest model to get feature importance
+rf_model <- 
+  rand_forest(mode = "classification", trees = 500) |> 
+  set_engine("ranger", importance = "permutation")
 
-This is the bad visualisation of the AI Song Contest we used in our first lab session, this time in a dashboard.
+rf_workflow <- 
+  workflow() |> 
+  add_formula(ai ~ arousal + danceability + instrumentalness + tempo + valence) |> 
+  add_model(rf_model) |> 
+  fit(data = compmus2025_filtered)
 
-### Visualising the AI Song Contest 2
+# Extract feature importance
+feature_importance <- 
+  extract_fit_parsnip(rf_workflow) |> 
+  vip::vi() |> 
+  arrange(desc(Importance)) |> 
+  head(3)  # Select the top 3 most important features
 
-```{r}
-aisc2024 |> 
-  ggplot(aes(x = tempo, y = arousal, color = danceability)) +
-  geom_point(alpha = 0.7, aes(size = instrumentalness)) +  # Add transparency for visibility
-  geom_smooth(method = "loess", color = "black", linetype = "dashed", se = FALSE) +  # Trend line for clarity
-  scale_x_continuous(
-    limits = c(50, 200),
-    breaks = seq(50, 200, by = 50)
-  ) +
-  scale_y_continuous(
-    limits = c(1, 9),
-    breaks = c(1, 5, 9)
-  ) +
-  scale_color_viridis_c(option = "plasma") +  # Use a distinct, high-contrast palette
-  scale_size(range = c(1, 6)) +  # Keep point sizes meaningful
-  theme_minimal(base_size = 14) +  # Cleaner theme with larger text
+# Select top features dynamically
+top_features <- feature_importance$Variable
+
+# Create a new plot with the top features
+p <- compmus2025_filtered |> 
+  ggplot(aes_string(x = top_features[1], y = top_features[2], colour = "ai", size = top_features[3])) +
+  geom_point(alpha = 0.8) +
+  scale_color_viridis_d() +
   labs(
-    title = "AI Song Contest 2024: Tempo vs. Arousal",
-    subtitle = "Danceability indicated by color, instrumentalness by size",
-    x = "Tempo (BPM)",
-    y = "Arousal (Energy Level)",
-    color = "Danceability",
-    size = "Instrumentalness"
+    x = top_features[1],
+    y = top_features[2],
+    size = top_features[3],
+    colour = "AI"
   ) +
-  theme(legend.position = "bottom")  # Move legend to avoid overlap
-ggplotly()
-```
-***
-To improve and build upon the first visualization, I sought to formulate a story by improving the look of the visualization, making it more readable. I went about doing this by:
+  theme_minimal()
 
-1. Removing elements like `geom_rug()` that did not add much value  
-2. Adjusting labels, font sizes, and layout to improve clarity  
-3. Adding trend lines or facets for better pattern recognition, enhancing comparisons  
-4. Using the size and color variables in a meaningful way  
-
-This updated version:  
-
-✅ Clearly shows tempo vs. arousal trends  
-✅ Uses color and size effectively  
-✅ Highlights overall trends with a dashed trend line  
-✅ Has a clean and readable layout  
-
-### compmus120125 corpus 
-
-```{r}
-compmus2025 <- read_csv("/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/saryanasser/compmus2025.csv")
-compmus2025 |> 
-  ggplot(aes(x = tempo, y = arousal, color = danceability)) +
-  geom_point(alpha = 0.7, aes(size = instrumentalness)) +  # Transparency for visibility
-  geom_smooth(method = "loess", color = "black", linetype = "dashed", se = FALSE) +  # Trend line
-  scale_x_continuous(limits = c(50, 200), breaks = seq(50, 200, by = 50)) +
-  scale_y_continuous(limits = c(1, 9), breaks = c(1, 5, 9)) +
-  scale_color_viridis_c(option = "plasma") +  # High-contrast palette
-  scale_size(range = c(1, 6)) +  # Meaningful point sizes
-  theme_dark(base_size = 14) +  # More readable theme
-  labs(
-    title = "Computational Musicology Corpus 2025: Tempo vs. Arousal",
-    subtitle = "Danceability indicated by color, instrumentalness by size",
-    x = "Tempo (BPM)",
-    y = "Arousal (Energy Level)",
-    color = "Danceability",
-    size = "Instrumentalness"
-  ) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 12),  # Center & bold title
-    plot.subtitle = element_text(hjust = 0.5, size = 14),  # Center subtitle
-    plot.margin = margin(10, 10, 10, 10),  # Adds padding
-    legend.position = "bottom",
-    legend.box = "vertical"
-  )  
-```
-
-### Personal Tracks
-
-I decided on exploring different genres that I like by asking different models for various genres of songs. I have always been a fan of post-punk, alternative rock music from the late 90s to early 2000s, such as Interpol, The Strokes, Bloc Party, Arctic Monkeys, Fontaines D.C. With the help of AI, I came up with this description to use as a prompt for gen AI music models: a high-energy alt rock / post-punk song with a melodic bassline, intricate drumming, and sharp and rhythmic guitar work, reminiscent of the bands Interpol and Bloc Party. dynamic, with tension-building verses leading into an explosive, anthemic chorus. create a sense of depth and intensity.” I also used this shortened version for models with character limits “Post-Punk, Driving Melodic Bassline, Angular Reverb-Drenched Guitars, Punchy Dynamic Drumming, Moody Detached Vocals, Urgent & Anthemic, Dark Yet Energetic, Tension-Building Composition, 140 BPM”. I have also recently been enjoying deep house music, so I decided to choose this genre as one of my songs. I used the following prompts, “deep house song that has a hypnotic beat, gradually layering warm synths, deep basslines, and subtle percussive beats, with a steady, entrancing rhythm. slow, cinematic build-ups that evoke nostalgia and euphoria. Incorporate atmospheric pads and a shimmering, time-dissolving feel of the track, with immersive, and emotionally uplifting verses and bridges, suitable for a sunset in the mountains” and “Deep House, Hypnotic Synth Pads, Pulsing Bassline, Rolling Four-on-the-Floor Groove, Atmospheric Textures, Slow-Building Progression, Dreamy Vocal Samples, Cinematic, Nostalgic, Expansive, 120 BPM”. I wanted to try a different genre that I also enjoy, something along the lines of Lana del Rey’s style. So I used the following prompts, “A cinematic baroque / dream pop composition that blends dreamy electronic synths with classical orchestration. Feature violins, melancholic clarinets, and rich trumpet swells, weaving through ethereal synth pads and delicate, reverberated piano. The rhythm should be slow and hypnotic, with a hazy, dreamlike quality. The vocals should be intimate yet grand, drenched in vintage-style reverb, with poetic, melancholic lyrics evoking themes of romance, nostalgia, and faded Hollywood glamour. Think of Lana Del Rey’s storytelling style, but with a modern dream pop twist—layered harmonies, sweeping crescendos, and an air of cinematic longing .” and “Baroque Pop / Dream Pop, Ethereal Synth Pads, Sweeping Violin & Clarinet Arrangements, Melancholic Trumpet Swells, Reverb-Drenched Intimate Vocals, Vintage Aesthetic, Poetic & Nostalgic, Cinematic & Grand, 80 BPM”. I explored the outputs of these prompts from various models including Suno, Stable Audio, Beatoven.ai, Soundverse.ai, Udio, and Mubert. Although I was hesitant to try Suno and Udio given their use of artists’ music without compensating them, I wanted to see whether there would be any differences in the quality, production output, relevance to the prompt, and similarity to expectations and existing songs.I found the vocal and lyrical qualities of most models to be of somewhat lower quality than I was expecting, with many songs sounding unnatural or AI generated (understandably).
-
-**My First Track**  
-Description:
-```
-I ended up deciding on the Stable Audio deep house track for my first track because it seemed to best match my expectations of emotive, intense, while also calming and not sounding too elaborate.
-```
-
-```{r, results='asis', echo=FALSE}
-cat('<audio controls>
-  <source src="/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/sarya-n-1.mp3">
-</audio>')
-```
-
-**My Second Track**  
-Description:  
-```
-For my second track, I ended up deciding to go with another deep house song that I generated on Suno.
-```
-
-```{r, results='asis', echo=FALSE}
-cat('<audio controls>
-  <source src="/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/sarya-n-2.mp3" type="audio/mpeg">
-</audio>')
-```
-
-### Chromogram for both songs
-
-```{r}
-library(ggplot2)
-library(patchwork)
-
-source("compmus.R")
-
-# Process the first track
-track1 <- "features/sarya-n-1.json" |>                           
-  compmus_chroma(norm = "manhattan") |>                
-  ggplot(aes(x = time, y = pc, fill = value)) + 
-  geom_raster() +
-  scale_y_continuous(
-    breaks = 0:11,
-    minor_breaks = NULL,
-    labels = c(
-                "C", "C#", "D", "D#",
-                "E", "F", "F#", "G",
-                "G#", "A", "A#", "B"
-              )
-  ) +
-  scale_fill_viridis_c(option = "rocket", guide = "none") +             
-  labs(title = "Track 1", x = "Time (s)", y = NULL) +
-  theme_light()    
-
-# Process the second track
-track2 <- "features/sarya-n-2.json" |>                           
-  compmus_chroma(norm = "manhattan") |>                
-  ggplot(aes(x = time, y = pc, fill = value)) + 
-  geom_raster() +
-  scale_y_continuous(
-    breaks = 0:11,
-    minor_breaks = NULL,
-    labels = c(
-                "C", "C#", "D", "D#",
-                "E", "F", "F#", "G",
-                "G#", "A", "A#", "B"
-              )
-  ) +
-  scale_fill_viridis_c(option = "rocket", guide = "none") +             
-  labs(title = "Track 2", x = "Time (s)", y = NULL) +
-  theme_light()    
-
-# Combine the two plots side by side
-track1 + track2
+# Convert to interactive plot
+ggplotly(p)
 
 ```
 
 ***
 
-I modified the template code by:
+Revised Elements:
 
-1. Changing the `norm` parameter, which affects how the chroma features are normalized: I chose the `manhattan` norm to retain musical structure
-2. Changing the theme and color scales: For personalization and variation on the visual clarity, I used the rocket coolor scale and the light theme option
+Instead of using valence and tempo, the plot now displays instrumentalness (x-axis) and arousal (y-axis), which were identified as more important features by the random forest model.
+Danceability is used for point size, suggesting it plays a significant role in distinguishing AI vs. Non-AI music.
 
-A side-by-side analysis of the chromograms of my two tracks reveals the distribution of the 12 musical pitch classes of each song.  A chromagram represents pitch class content regardless of octave, making it useful for identifying harmonic structure and key. Track 1 shows relatively high instances of the F#, F, and E pitch classes, with lower instances of the C class. Track 2 shoqws common occurrence of the A#, F#, D#, and C# pitch classes. The first track seems more consistent in terms of chroma distribution across time, as it is a deep house song with a consistent build up, while track 2 has more irregular fluctuations, possibly indicating more dynamic harmonic shifts or different instrumentation, as the track is more upbeat, joyful, and playful. 
+Analysis:
 
-### Cepstrogram 
+There is a negative correlation between instrumentalness (x-axis) and arousal (y-axis).
+As instrumentalness increases, arousal tends to decrease. This suggests that tracks with more instrumental content tend to be less energetic.
 
+AI-generated tracks appear more concentrated at higher instrumentalness values (0.7-0.9) and lower arousal values.
+Non-AI tracks are more spread out, with some occurring at lower instrumentalness values and higher arousal values. This suggests that AI music may favor more instrumental, low-energy compositions.
+
+Danceability is mapped to point size, showing variation across AI and Non-AI tracks.
+Larger points (high danceability) are spread throughout, meaning danceability does not show a strong trend with instrumentalness or arousal.
+
+It can be interpreted that AI-generated music might be more predictable and structured, focusing on instrumental, low-energy tracks, while Non-AI music covers a broader range, possibly due to human creativity and varied emotional expression.
+
+
+### Confusion Matrix
 ```{r}
-source("compmus.R")
-"features/sarya-n-1.json" |>                           # Change the track
-  compmus_mfccs(norm = "euclidean") |>                  # Change the norm
-  ggplot(aes(x = time, y = mfcc, fill = value)) + 
-  geom_raster() +
-  scale_y_continuous(
-    breaks = 0:12,
-    minor_breaks = NULL,
-  ) +
-  scale_fill_viridis_c(option = "rocket", guide = "none") +               # Change the colours?
-  labs(x = "Time (s)", y = "Coefficient Number", fill = NULL) +
-  theme_dark() 
+library(tidymodels)
+knn_model <-
+  nearest_neighbor(neighbors = 1) |>
+  set_mode("classification") |> 
+  set_engine("kknn")
+classification_knn <- 
+  workflow() |> 
+  add_recipe(classification_recipe) |> 
+  add_model(knn_model) |> 
+  fit_resamples(compmus_cv, control = control_resamples(save_pred = TRUE))
+classification_knn |> 
+  collect_predictions() |> 
+  conf_mat(truth = ai, estimate = .pred_class) |> 
+  autoplot(type = "mosaic")
 ```
 
 ***
 
-This cepstrogram of the same track reveals a visual representation of the cepstrum of a signal over time, used for timbre analysis. It works by: computing a spectrogram (amplitude of a Fourier transform), then applying a second inverse Fourier Transform (cepstrum) -  which is the result of the logarithm of the estimated signal spectrum
-
-I modified the template code by:
-
-1. Changing the `norm` parameter, which affects how the chroma features are normalized: I chose the `euclidean` norm, sued for high-dimensional data and to emphasize clarity.
-2. Changing the theme and color scales: For personalization and variation on the visual clarity, I used the rocket color scale and the dark theme option
+The confusion chart on the left represents the performance of a classifier attempting to distinguish between AI-generated and non-AI-generated music. Using a nearest-neighbor classifier, the most important features selected for classification were: Instrumentalness, Danceability, Arousal, Valence, Tempo.
 
 ### Conclusion / Discussion
 
-incomplete
+I found the making of this dashboard extremely informative and fascinating. Through the development of various visualizations concerning the 4 moments of musical sound (pitch, volume, timbre, and duration) I gained a lot of insight into different characteristics of music and learned how sound can be visualized and expressed in an explorable manner. 
+I also found it very insightful to receive weekly feedback into my portfolio. Being able to view fellow students' perspective in a course with a diverse range of academic backgrounds was really interesting. I incorporated several of the comments and suggestions that I received and was able to learn a lot about the computational side of music analysis. 
+
+I think that working on this portfolio has deepened my appreciation for the complexity of music and the depth of computational analysis. By using chromograms, cepstrograms, self-similarity charts, keygrams, chordograms, tempograms, histograms, and energy novelty charts, I was able to break down AI- and human-generated tracks into quantifiable elements.
+
+One of the most interesting takeaways from this portfolio was seeing how the overall class corpus compares, seeing the similarities and differences in students' songs in terms of track-level and corpus-level features like valence, tempo, pitch distributions, loudness dynamics, timbre characteristics, and rhythmic structures. I also found that the classification analysis revealed fascinating insights into how different musical features contribute to genre perception and categorization as AI or human generated. I am generally really intrigued by the global AI shift and I am glad I was able to explore this evolution from the musical aspect. 
