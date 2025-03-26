@@ -146,7 +146,7 @@ This updated version:
 ✅ Highlights overall trends with a dashed trend line  
 ✅ Has a clean and readable layout  
 
-### compmus120125 corpus 
+### compmus2025 corpus 
 
 ```{r}
 compmus2025 <- read_csv("/Users/saryanasser/Library/CloudStorage/OneDrive-UvA/Computational Musicology/saryanasser/compmus2025.csv")
@@ -664,7 +664,7 @@ ggplotly()
 ***
 I decided to create a histogram of the class corpus to observe the most common tempi. There is a clear peak around 90-100 BPM, suggesting that this is the most frequent tempo range in the class corpus. It is also interesting that there are multiple peaks, suggesting that there is a diverse set of tempos rather than a single dominant one. There are also some tracks in the lower tempo range (below 50 BPM), possibly due to half-time interpretations.
 
-### Energy & Spectral Novelty
+### Energy & Spectral Novelty Track 1
 ```{r}
 library(tidyverse)
 library(gridExtra)
@@ -693,60 +693,111 @@ The ``compmus_energy_novelty()` function estimates novelty based on sudden chang
 
 The `compmus_spectral_novelty()` function approximates spectral novelty by analyzing cepstrograms, which represent changes in the frequency content of a signal, detecting harmonic or timbral shifts better than energy-based novelty. Because this visualization seems more consistent that that of the energy novelty, it can be deduced that there is less spectral variation and more energy novelty.
 
+### Clustering
+```{r}
+ library(tidyverse)
+ library(tidymodels)
+ library(ggdendro)
+ library(heatmaply)
+ source("compmus.R")
+ compmus2025 <- read_csv("compmus2025.csv")
+ cluster_juice <-
+   recipe(
+     filename ~
+       arousal +
+       danceability +
+       instrumentalness +
+       tempo +
+       valence,
+     data = compmus2025
+   ) |>
+   step_center(all_predictors()) |>
+   step_scale(all_predictors()) |> 
+   # step_range(all_predictors()) |> 
+   prep(compmus2025) |>
+   juice() |>
+   column_to_rownames("filename")
+ compmus_dist <- dist(cluster_juice, method = "euclidean")
+ compmus_dist |> 
+   hclust(method = "complete") |> # Try single, average, and complete.
+   dendro_data() |>
+   ggdendrogram()
+```
+ 
+### Heatmaps
+```{r}
+ library(tidyverse)
+ heatmaply(
+   cluster_juice,
+   hclustfun = hclust,
+   hclust_method = "average",  # Change for single, average, or complete linkage.
+   dist_method = "euclidean"
+ )
+```
+ 
+```{r}
+ compmus2025_filtered <- 
+   compmus2025 |> filter(!is.na(ai)) |> 
+   mutate(ai = factor(if_else(ai, "AI", "Non-AI")))
+ classification_recipe <-
+   recipe(
+     ai ~
+       arousal +
+       danceability +
+       instrumentalness +
+       tempo +
+       valence,
+     data = compmus2025_filtered
+   ) |>
+   step_center(all_predictors()) |>
+   step_scale(all_predictors())      # Converts to z-scores.
+   # step_range(all_predictors())    # Sets range to [0, 1].
+ compmus_cv <- compmus2025_filtered |> vfold_cv(5)
+```
+
 ### Revised Random Forest Classification
 ```{r}
-library(tidyverse)
-library(tidymodels)
-library(plotly)
-
-compmus2025_filtered |>
-  ggplot(aes(x = valence, y = arousal, colour = ai, size = tempo)) +
-  geom_point(alpha = 0.8) +
-  scale_color_viridis_d() +
-  labs(
-    x = "Valence",
-    y = "Arousal",
-    size = "Tempo",
-    colour = "AI"
-  )
-
-# Train a Random Forest model to get feature importance
-rf_model <- 
-  rand_forest(mode = "classification", trees = 500) |> 
-  set_engine("ranger", importance = "permutation")
-
-rf_workflow <- 
-  workflow() |> 
-  add_formula(ai ~ arousal + danceability + instrumentalness + tempo + valence) |> 
-  add_model(rf_model) |> 
-  fit(data = compmus2025_filtered)
-
-# Extract feature importance
-feature_importance <- 
-  extract_fit_parsnip(rf_workflow) |> 
-  vip::vi() |> 
-  arrange(desc(Importance)) |> 
-  head(3)  # Select the top 3 most important features
-
-# Select top features dynamically
-top_features <- feature_importance$Variable
-
-# Create a new plot with the top features
-p <- compmus2025_filtered |> 
-  ggplot(aes_string(x = top_features[1], y = top_features[2], colour = "ai", size = top_features[3])) +
-  geom_point(alpha = 0.8) +
-  scale_color_viridis_d() +
-  labs(
-    x = top_features[1],
-    y = top_features[2],
-    size = top_features[3],
-    colour = "AI"
-  ) +
-  theme_minimal()
-
-# Convert to interactive plot
-ggplotly(p)
-
+ library(tidyverse)
+ library(tidymodels)
+ library(plotly)
+ 
+ # Train a Random Forest model to get feature importance
+ rf_model <- 
+   rand_forest(mode = "classification", trees = 500) |> 
+   set_engine("ranger", importance = "permutation")
+ 
+ rf_workflow <- 
+   workflow() |> 
+   add_formula(ai ~ arousal + danceability + instrumentalness + tempo + valence) |> 
+   add_model(rf_model) |> 
+   fit(data = compmus2025_filtered)
+ 
+ # Extract feature importance
+ feature_importance <- 
+   extract_fit_parsnip(rf_workflow) |> 
+   vip::vi() |> 
+   arrange(desc(Importance)) |> 
+   head(3)  # Select the top 3 most important features
+ 
+ # Select top features dynamically
+ top_features <- feature_importance$Variable
+ 
+ # Create a new plot with the top features
+ p <- compmus2025_filtered |> 
+   ggplot(aes_string(x = top_features[1], y = top_features[2], colour = "ai", size = top_features[3])) +
+   geom_point(alpha = 0.8) +
+   scale_color_viridis_d() +
+   labs(
+     x = top_features[1],
+     y = top_features[2],
+     size = top_features[3],
+     colour = "AI"
+   ) +
+   theme_minimal()
+ 
+ # Convert to interactive plot
+ ggplotly(p)
+ 
 ```
 
 ***
@@ -768,6 +819,7 @@ Danceability is mapped to point size, showing variation across AI and Non-AI tra
 Larger points (high danceability) are spread throughout, meaning danceability does not show a strong trend with instrumentalness or arousal.
 
 It can be interpreted that AI-generated music might be more predictable and structured, focusing on instrumental, low-energy tracks, while Non-AI music covers a broader range, possibly due to human creativity and varied emotional expression.
+
 
 
 ### Confusion Matrix
