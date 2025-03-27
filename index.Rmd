@@ -755,6 +755,15 @@ The `compmus_spectral_novelty()` function approximates spectral novelty by analy
  compmus_cv <- compmus2025_filtered |> vfold_cv(5)
 ```
 
+***
+The dendrogram and heatmap cluster tracks based on musical features such as valence, arousal, danceability, instrumentalness, and tempo. This hierarchical clustering groups similar tracks together, revealing underlying patterns in the dataset. The heatmap suggests at least four major clusters based on how tracks share similar musical attributes.
+
+Some songs have strong similarities in valence (positivity), arousal (energy), and danceability, while others stand out in instrumentalness or tempo. 
+
+One cluster seems to contain high-energy, danceable tracks, indicated by bright yellow bands in danceability and tempo. Another group appears to be low-valence, possibly melancholic or minor-mode tracks, as seen in the darker colors in the valence section. 
+
+A third group may represent instrumental-heavy tracks with low vocal presence, suggested by bright colors in instrumentalness. A final, less obvious cluster could consist of moderate-energy tracks with varied tonality.
+
 ### Revised Random Forest Classification
 ```{r}
  library(tidyverse)
